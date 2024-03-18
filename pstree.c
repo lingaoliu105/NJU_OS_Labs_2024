@@ -2,7 +2,7 @@
  * @ Author: Your name
  * @ Create Time: 2024-03-11 12:08:01
  * @ Modified by: Your name
- * @ Modified time: 2024-03-12 14:18:56
+ * @ Modified time: 2024-03-18 13:22:26
  * @ Description:
  */
 
@@ -39,6 +39,11 @@ int main(int argc, char const *argv[]) {
 
     assert(!argv[argc]);
 
+    if (print_version){
+        printf("%s\n",PROGRAM_VERSION);
+        return 0;
+    }
+
     DIR *dir;
     const char *basePath = "/proc";
     struct dirent *entry;
@@ -64,6 +69,8 @@ int main(int argc, char const *argv[]) {
             char filename[50]; //fixed size for now
 
             sprintf(filename, "/proc/%d/status", pid);
+            // printf("%d\n",pid);
+            // the order of pids read seems to be in numerical order
             FILE *statusFp = fopen(filename, "r");
             if (statusFp == NULL) {
                 char errorMessage[50];
@@ -75,7 +82,13 @@ int main(int argc, char const *argv[]) {
             // read the status file, extracting information required
             char buffer[100];
             curr->pid = pid;
-            k = kh_put(ProcessNode_map, h, pid, curr);
+             
+            int ret; // will store the returned result of the put operation
+            k = kh_put(ProcessNode_map, h, pid, &ret); // insert pid as a key into the hashtable
+            if (!ret) kh_del(ProcessNode_map,h,k);
+            kh_value(h,k) = curr; // set the value corresponding to the key (pid)
+
+
 
             while (fgets(buffer, sizeof(buffer), statusFp) != NULL){
                 // printf("%s", buffer);
@@ -97,7 +110,6 @@ int main(int argc, char const *argv[]) {
 
             pid_t ppid = curr->parent_id;
             k = kh_get(ProcessNode_map,h,ppid);
-            printf("%d\n", k);
 
             if (k != kh_end(h)){
                 ProcessNode* parent = kh_value(h,k);
@@ -116,6 +128,12 @@ int main(int argc, char const *argv[]) {
             curr = malloc(sizeof(ProcessNode));
 
         }
+    }
+
+    if (sort_pid){
+        print_tree_asc(dummyhead->next,0,print_pid);
+    }else{
+        print_tree(dummyhead->next,0,print_pid);
     }
 
     return 0;
@@ -156,10 +174,11 @@ int start_with(char* str,char* prefix){
 }
 
 void get_content(char*str,char* dest){
+    // printf("%s\n",str);
     int length = strlen(str);
     int index = length-2;
     char c;
-    while (index>=0 &&( c = str[index]) && c!='n' && c!='\t' && c!=' ')
+    while (index>=0 &&( c = str[index]) && c!='\n' && c!='\t' && c!=' ')
     {
         index--;
     }
@@ -167,5 +186,53 @@ void get_content(char*str,char* dest){
         dest[i] = str[index+i+1];
     }
     dest[length-2-index] = '\0';
+    // printf("%s\n",dest);
 }
- 
+
+void print_tree(ProcessNode* root,int depth, bool print_pid){
+    print_self_info(depth, print_pid, root);
+    ProcessNode* child = root->childhead;
+    while (child != NULL){
+        printf("\n");
+        print_tree(child,depth+1,print_pid);
+        child = child->next;
+    }
+}
+
+void print_tree_asc(ProcessNode * root, int depth, bool print_pid){
+    print_self_info(depth,print_pid,root);
+    ProcessNode *child = root->childhead;
+    print_children_recur(child,depth+1,print_pid);
+}
+
+void print_children_recur(ProcessNode * head, int depth, bool print_pid){
+    if (head==NULL){
+        return;
+    }
+    if (head->next!=NULL){
+        print_children_recur(head->next, depth,print_pid);
+    }
+    printf("\n");
+    print_tree_asc(head,depth, print_pid);
+}
+
+void print_indentation(int depth){
+    for (int i = 0; i < depth; i++)
+    {
+        printf("      ");  // align with |- - - 
+    }
+}
+
+void print_self_info(int depth, bool print_pid, ProcessNode* node){
+    print_indentation(depth);
+    if (depth != 0)
+    {
+        printf("|- - -");
+    }
+    printf("%s", node->name);
+    if (print_pid)
+    {
+        printf("(%d)", node->pid);
+    }
+}
+
