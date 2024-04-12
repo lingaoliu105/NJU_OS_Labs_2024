@@ -2,7 +2,10 @@
 #include <amdev.h>
 #include <klib.h>
 #include <klib-macros.h>
-
+#include "imageHex.h"
+#include "image_info.h"
+#include "mylib.h"
+#include "kernel.h"
 #define SIDE 16
 
 static int w, h;  // Screen size
@@ -43,14 +46,43 @@ void splash() {
   w = info.width;
   h = info.height;
 
+
   for (int x = 0; x * SIDE <= w; x ++) {
     for (int y = 0; y * SIDE <= h; y++) {
       if ((x & 1) ^ (y & 1)) {
-        draw_tile(x * SIDE, y * SIDE, SIDE, SIDE, 0xff0000); // white
+        draw_tile(x * SIDE, y * SIDE, SIDE, SIDE, 0xff0000);
       }
+
     }
   }
 }
+
+void draw_image(){
+    AM_GPU_CONFIG_T info = {0};
+    ioe_read(AM_GPU_CONFIG, &info);
+    w = info.width;
+    h = info.height;
+    my_printf("screen width :  %d \n",w);
+    my_printf("screen height: %d\n",h);
+    image_info img_info = parse_png_image(target_img);
+    uint32_t pixel;
+    for (int x = 0; x * SIDE <= w; x ++) {
+        for (int y = 0; y * SIDE <= h; y++) {
+//            if ((x & 1) ^ (y & 1)) {
+//                draw_tile(x * SIDE, y * SIDE, SIDE, SIDE, 0xff0000);
+//            }
+            if (img_info.color_type==2){
+                print("The image is RGB\n");
+                pixel = (target_img[y*img_info.width+x]<<16) | (target_img[y*img_info.width+x+1]<<8) | (target_img[y*img_info.width+x+2]);
+            }else{
+                pixel = 0x000000;
+            }
+            draw_tile(x*SIDE, y*SIDE, SIDE, SIDE, pixel);
+        }
+    }
+}
+
+
 
 // Operating system is a C program!
 int main(const char *args) {
