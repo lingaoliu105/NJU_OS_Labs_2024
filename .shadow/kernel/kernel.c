@@ -75,7 +75,7 @@ void draw_image(){
                 my_printf("The image is RGB\n");
                 pixel = (target_img[y*img_info.width+x]<<16) | (target_img[y*img_info.width+x+1]<<8) | (target_img[y*img_info.width+x+2]);
             }else{
-                pixel = 0x000000;
+                pixel = 0xffffff;
             }
             draw_tile(x*SIDE, y*SIDE, SIDE, SIDE, pixel);
         }
