@@ -103,7 +103,7 @@ void draw_image()
             {
                 pixel = 0xffffff;
             }
-            draw_tile(x * SIDE, y * SIDE, SIDE, SIDE, 0xffffff);
+            draw_tile(x * SIDE, y * SIDE, SIDE, SIDE, pixel);
         }
     }
 }
