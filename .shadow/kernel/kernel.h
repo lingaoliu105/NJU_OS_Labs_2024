@@ -28,8 +28,10 @@ void bilinear_interpolation(unsigned char *src_pixels, int src_width, int src_he
     // 对目标图像的每个像素进行双线性插值
     for (int dst_y = 0; dst_y < dst_height; ++dst_y)
     {
+        printf("dst_y:%d\n",dst_y);
         for (int dst_x = 0; dst_x < dst_width; ++dst_x)
         {
+            printf("dst_x:%d\n",dst_x);
             // 计算源图像中待插值的四个像素坐标
             const int src_x0 = dst_x / 2, src_x1 = src_x0 + 1;
             const int src_y0 = dst_y / 2, src_y1 = src_y0 + 1;

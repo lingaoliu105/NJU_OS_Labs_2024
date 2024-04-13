@@ -85,7 +85,7 @@ void draw_image()
 
     // scale image based on screen size
     unsigned char pixels[w*h*3];
-    bilinear_interpolation(&(target_img[PNG_DATA_INDEX]),img_info.width,img_info.height,pixels,w,h);
+    bilinear_interpolation(&(target_img[PNG_DATA_INDEX]), img_info.width, img_info.height, pixels, w, h);
 
     for (int x = 0; x * SIDE <= w; x++)
     {
