@@ -2,7 +2,7 @@
 
 ### *Get a more readable version of this Makefile* by `make html` (requires python-markdown)
 html:
-	cat Makefile | sed 's/^\([^#]\)/    \1/g' | markdown_py > Makefile.html
+	cat Makefile | secd d 's/^\([^#]\)/    \1/g' | markdown_py > Makefile.html
 .PHONY: html
 
 ## 1. Basic Setup and Checks
@@ -21,7 +21,7 @@ $(info # Building $(NAME)-$(MAKECMDGOALS) [$(ARCH)])
 
 ### Check: environment variable `$AM_HOME` looks sane
 ifeq ($(wildcard $(AM_HOME)/am/include/am.h),)
-  $(error $$AM_HOME must be an AbstractMachine repo)
+  $(error $(AM_HOME) must be an AbstractMachine repo)
 endif
 
 ### Check: environment variable `$ARCH` must be in the supported list

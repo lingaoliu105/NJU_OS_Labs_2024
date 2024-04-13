@@ -4,7 +4,6 @@
 #include <klib-macros.h>
 #include "imageHex.h"
 #include "image_info.h"
-#include "mylib.h"
 #include "kernel.h"
 
 #define SIDE 16
@@ -63,8 +62,8 @@ void draw_image() {
     ioe_read(AM_GPU_CONFIG, &info);
     w = info.width;
     h = info.height;
-    my_printf("screen width :  %d \n", w);
-    my_printf("screen height: %d\n", h);
+    printf("screen width :  %d \n", w);
+    printf("screen height: %d\n", h);
     image_info img_info = parse_png_image(target_img);
     uint32_t pixel;
     for (int x = 0; x * SIDE <= w; x++) {
@@ -73,11 +72,11 @@ void draw_image() {
 //                draw_tile(x * SIDE, y * SIDE, SIDE, SIDE, 0xff0000);
 //            }
             if (img_info.color_type == 2) {
-                my_printf("The image is RGB\n");
+                printf("The image is RGB\n");
                 pixel = (target_img[y * img_info.width + x] << 16) | (target_img[y * img_info.width + x + 1] << 8) |
                         (target_img[y * img_info.width + x + 2]);
             } else {
-                my_printf("The image color type is: %d\n",img_info.color_type);
+                printf("The image color type is: %d\n",img_info.color_type);
                 pixel = 0xffffff;
             }
             draw_tile(x * SIDE, y * SIDE, SIDE, SIDE, pixel);

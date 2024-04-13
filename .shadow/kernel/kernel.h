@@ -16,5 +16,6 @@ image_info parse_png_image(image_data image){
     info.width = (image[PNG_WIDTH_INDEX]<<24) | (image[PNG_WIDTH_INDEX+1]<<16) | (image[PNG_WIDTH_INDEX+2]<<8) | (image[PNG_WIDTH_INDEX+3]);
     info.height = (image[PNG_HEIGHT_INDEX]<<24) | (image[PNG_HEIGHT_INDEX+1]<<16) | (image[PNG_HEIGHT_INDEX+2]<<8) | (image[PNG_HEIGHT_INDEX+3]);
     info.color_type = image[PNG_COLOR_TYPE_INDEX];
+
     return info;
 }
