@@ -45,7 +45,7 @@ static void draw_tile(int x, int y, int w, int h, uint32_t color)
     };
     for (int i = 0; i < w * h; i++)
     {
-        pixels[i] = 0xffffff;
+        pixels[i] = color;
     }
     printf("jfhoa\n");
     ioe_write(AM_GPU_FBDRAW, &event);
@@ -103,7 +103,7 @@ void draw_image()
             {
                 pixel = 0xffffff;
             }
-            draw_tile(x * SIDE, y * SIDE, SIDE, SIDE, pixel);
+            draw_tile(x * SIDE, y * SIDE, SIDE, SIDE, 0xffffff);
         }
     }
 }
