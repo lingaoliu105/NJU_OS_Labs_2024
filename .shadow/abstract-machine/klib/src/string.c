@@ -16,6 +16,7 @@ char *strcpy(char *dst, const char *src) {
     int index = 0;
     while (src[index] != '\0') {
         dst[index] = src[index];
+        index++;
     }
     return dst;
 }
