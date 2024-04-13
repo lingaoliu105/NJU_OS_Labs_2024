@@ -49,6 +49,7 @@ static void draw_tile(int x, int y, int w, int h, uint32_t color)
     }
     printf("jfhoa\n");
     ioe_write(AM_GPU_FBDRAW, &event);
+    printf("jjjs\n");
 }
 
 void splash()
