@@ -1,11 +1,19 @@
 NAME := kernel
 SRCS := kernel.c
 export MODULE  := L0
-export AM_HOME := $(PWD)/../abstract-machine
+#export AM_HOME := $(PWD)/../abstract-machine
 ifeq ($(ARCH),)
 export ARCH := x86_64-qemu
+endif
+
+ifeq ($(FILENAME),)
+export FILENAME := git.png
 endif
 
 include $(AM_HOME)/Makefile
 include ../oslabs.mk
 image: git
+imageHex:
+	cp $(FILENAME) target_img
+	xxd -i target_img > imageHex.h
+
