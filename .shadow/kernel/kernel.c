@@ -108,6 +108,7 @@ void draw_image()
 // Operating system is a C program!
 int main(const char *args)
 {
+    return 1;
     ioe_init();
 
     puts("mainargs = \"");
