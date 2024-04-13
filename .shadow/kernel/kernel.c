@@ -95,6 +95,7 @@ void draw_image()
             {
                 pixel = (pixels[y * w + x] << 16) | (pixels[y * w + x + 1] << 8) |
                         (pixels[y * w + x + 2]);
+                printf("pixel: %x\n", pixel);
             }
             else
             {

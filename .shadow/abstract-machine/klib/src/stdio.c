@@ -42,12 +42,20 @@ int printf(const char *fmt, ...) {
 
                 //     break;
                 // }
-                // case 'x':
-                // case 'X': {
-                //     unsigned int val = va_arg(args, unsigned int);
-                //     // Implement hexadecimal formatting and output via putch()
-                //     break;
-                // }
+                case 'x':
+                case 'X': {
+                    unsigned int val = va_arg(args, unsigned int);
+                    // Convert the unsigned integer to its uppercase hexadecimal representation
+                    char hex_buffer[11]; // Assuming 32-bit unsigned int requires at most 8 hex digits + null terminator
+                    int len = snprintf(hex_buffer, sizeof(hex_buffer), "%X", val);
+
+                    // Output the hexadecimal string via putch()
+                    for (int i = 0; i < len; ++i)
+                    {
+                        putch(hex_buffer[i]);
+                    }
+                    break;
+                }
                 // case 'f': {
                 //     double val = va_arg(args, double);
                 //     // Implement floating-point formatting and output via putch()
