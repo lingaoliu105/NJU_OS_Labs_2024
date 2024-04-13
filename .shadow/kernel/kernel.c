@@ -67,7 +67,6 @@ void draw_image() {
     image_info img_info = parse_png_image(target_img);
     uint32_t pixel;
     for (int x = 0; x * SIDE <= w; x++) {
-        printf("first loop\n");
         for (int y = 0; y * SIDE <= h; y++) {
             if (img_info.color_type == 2) {
                 printf("The image is RGB\n");
