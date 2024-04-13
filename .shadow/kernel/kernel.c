@@ -82,14 +82,19 @@ void draw_image()
     printf("image height: %d\n", img_info.height);
     printf("The image color type is: %d\n", img_info.color_type);
     uint32_t pixel;
+
+    // scale image based on screen size
+    unsigned char pixels[w*h*3];
+    bilinear_interpolation(&(target_img[PNG_DATA_INDEX]),img_info.width,img_info.height,pixels,w,h);
+
     for (int x = 0; x * SIDE <= w; x++)
     {
         for (int y = 0; y * SIDE <= h; y++)
         {
             if (img_info.color_type == 2)
             {
-                pixel = (target_img[y * img_info.width + x] << 16) | (target_img[y * img_info.width + x + 1] << 8) |
-                        (target_img[y * img_info.width + x + 2]);
+                pixel = (pixels[y * w + x] << 16) | (pixels[y * w + x + 1] << 8) |
+                        (pixels[y * w + x + 2]);
             }
             else
             {
