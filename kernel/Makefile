@@ -12,7 +12,7 @@ endif
 
 include $(AM_HOME)/Makefile
 include ../oslabs.mk
-image: git
+# image: git
 imageHex:
 	cp $(FILENAME) target_img
 	xxd -i target_img > imageHex.h
