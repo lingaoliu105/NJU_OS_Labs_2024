@@ -97,7 +97,7 @@ void draw_image()
             {
                 pixel = (pixels[y * w + x] << 16) | (pixels[y * w + x + 1] << 8) |
                         (pixels[y * w + x + 2]);
-                printf("pixel: %d\n", pixel);
+                printf("pixel: %d, upper limit %d\n", pixel,0xffffff);
             }
             else
             {
