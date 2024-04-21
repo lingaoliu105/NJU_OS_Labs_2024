@@ -107,13 +107,10 @@ void draw_image()
             else if (img_info.color_depth==24) // 3 bytes for a pixel
             {
                 int init_index = BMP_DATA_INDEX + ((h/SIDE-y-1) * w/SIDE + x) * 3;
-                println("index: %d",init_index);
-                // pixel = (pixels[init_index] << 16) | (pixels[init_index + 1] << 8) |
-                //         (pixels[init_index + 2]);                
+                println("index: %d",init_index);              
                 pixel = (pixels[init_index +2] << 16) | (pixels[init_index + 1] << 8) |
                         (pixels[init_index]);
             }
-            // printf("pixel: %d, upper limit %d\n", pixel,0xffffff);
             draw_tile(x * SIDE, y * SIDE, SIDE, SIDE, pixel);
         }
     }
