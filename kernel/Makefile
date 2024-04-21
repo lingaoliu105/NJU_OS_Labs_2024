@@ -7,7 +7,7 @@ export ARCH := x86_64-qemu
 endif
 
 ifeq ($(FILENAME),)
-export FILENAME := git.png
+export FILENAME := resized_example2.bmp
 endif
 
 include $(AM_HOME)/Makefile

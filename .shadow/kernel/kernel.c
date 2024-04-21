@@ -47,9 +47,7 @@ static void draw_tile(int x, int y, int w, int h, uint32_t color)
     {
         pixels[i] = color;
     }
-    printf("jfhoa\n");
     ioe_write(AM_GPU_FBDRAW, &event);
-    printf("jjjs\n");
 }
 
 void splash()
@@ -82,7 +80,7 @@ void draw_image()
     image_info img_info = parse_png_image(target_img);
     printf("image width: %d\n", img_info.width);
     printf("image height: %d\n", img_info.height);
-    printf("The image color type is: %d\n", img_info.color_type);
+    printf("The image color type is: %d\n", img_info.color_depth);
     uint32_t pixel;
 
     // scale image based on screen size
@@ -93,11 +91,10 @@ void draw_image()
     {
         for (int y = 0; y * SIDE <= h; y++)
         {
-            if (img_info.color_type == 2)
+            if (img_info.color_depth == 2)
             {
                 pixel = (pixels[y * w + x] << 16) | (pixels[y * w + x + 1] << 8) |
                         (pixels[y * w + x + 2]);
-                printf("pixel: %d, upper limit %d\n", pixel,0xffffff);
             }
             else
             {

@@ -10,11 +10,17 @@
 #define PNG_HEIGHT_INDEX 20
 #define PNG_DATA_INDEX 29
 #define PNG_COLOR_TYPE_INDEX 25
+
+#define BMP_WIDTH_INDEX 15
+#define BMP_HEIGHT_INDEX 19
+#define BMP_DATA_INDEX 54
+#define BMP_COLOR_TYPE_INDEX 27
+
 typedef struct {
     int width;
     int height;
     char format[10]; //"png" for now
-    char color_type;
+    char color_depth;
     /*0: 灰度，每个样本1个字节。
     2: 真彩色（RGB），每个像素3个字节。
     3: 真彩色带Alpha通道（RGBA），每个像素4个字节。
