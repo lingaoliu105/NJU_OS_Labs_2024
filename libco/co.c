@@ -48,6 +48,27 @@ PriorityQueue co_list;
 
 jmp_buf main_buffer;
 
+static inline void
+stack_switch_call(void *sp, void *entry, uintptr_t arg)
+{
+    asm volatile(
+#if __x86_64__
+        "movq %0, %%rsp; movq %2, %%rdi; jmp *%1"
+        :
+        : "b"((uintptr_t)sp),
+          "d"(entry),
+          "a"(arg)
+        : "memory"
+#else
+        "movl %0, %%esp; movl %2, 4(%0); jmp *%1"
+        :
+        : "b"((uintptr_t)sp - 8),
+          "d"(entry),
+          "a"(arg)
+        : "memory"
+#endif
+    );
+}
 struct co *co_start(const char *name, void (*func)(void *), void *arg) {
     // construct co
     printf("costart\n");
@@ -64,7 +85,7 @@ struct co *co_start(const char *name, void (*func)(void *), void *arg) {
 
         int jmp_result = setjmp(main_buffer);
         if (jmp_result==0){
-            (*func)(arg);
+            stack_switch_call(&current->stack[STACK_SIZE], func, (uintptr_t) arg);
         } // else return 
     }else{
         co_ptr->status = CO_NEW;
@@ -80,7 +101,7 @@ void co_wait(struct co *co) {
 
 void co_yield() {
     
-    printf("yield1\n");
+    // printf("yield1\n");
     int val = setjmp(current->jump_buffer);
     if (val==0){
         // yielding to other co
@@ -96,7 +117,7 @@ void co_yield() {
         }
         current = next;
         if (current->status==CO_NEW){
-            current->func(current->arg);
+            stack_switch_call(&current->stack[STACK_SIZE], current->func, (uintptr_t)current->arg);
         }else if (current->status==CO_RUNNING){
             longjmp(current->jump_buffer,0);
         }
@@ -107,4 +128,5 @@ void co_yield() {
         return;
     }
 }
+
 
