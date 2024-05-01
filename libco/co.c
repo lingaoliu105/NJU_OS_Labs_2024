@@ -5,14 +5,11 @@
 #include "PriorityQueue.h"
 #include <time.h>
 
-
 struct co *current = NULL; // global pointer to the current executing coroutine
-
 
 // 先设想我们需要用一个全局容器保存所有coroutine
 // 假设最多100个协程 (defined in PriorityQueue.h)
 PriorityQueue co_list;
-
 
 // struct context {
 //     uint64_t rax;      // 通用寄存器
@@ -69,25 +66,30 @@ stack_switch_call(void *sp, void *entry, uintptr_t arg)
 #endif
     );
 }
-struct co *co_start(const char *name, void (*func)(void *), void *arg) {
+struct co *co_start(const char *name, void (*func)(void *), void *arg)
+{
     // construct co
     printf("costart\n");
-    struct co *co_ptr = (struct co*)malloc(sizeof(struct co));
+    struct co *co_ptr = (struct co *)malloc(sizeof(struct co));
     co_ptr->name = name;
     co_ptr->func = func;
     co_ptr->arg = arg;
     time(&co_ptr->last_execution_time);
-    
+
     // 若current为空,此时无任务,则可开始执行func
-    if (current==NULL){
+    if (current == NULL)
+    {
         co_ptr->status = CO_RUNNING;
         current = co_ptr;
 
-        int jmp_result = setjmp(main_buffer);
-        if (jmp_result==0){
-            stack_switch_call(&current->stack[STACK_SIZE], func, (uintptr_t) arg);
-        } // else return 
-    }else{
+        int jmp_result = setjmp(main_buffer); // 给main留一个buffer.假如没有其他协程则跳转回来
+        if (jmp_result == 0)
+        {
+            stack_switch_call(&current->stack[STACK_SIZE], func, (uintptr_t)arg);
+        } // else return
+    }
+    else
+    {
         co_ptr->status = CO_NEW;
         // register co in the co list
         push(&co_list, co_ptr); // take note of the timestamp
@@ -95,38 +97,53 @@ struct co *co_start(const char *name, void (*func)(void *), void *arg) {
     return co_ptr;
 }
 
-void co_wait(struct co *co) {
-
+void co_wait(struct co *co)
+{
+    printf("wait\n");
 }
 
-void co_yield() {
-    
+void co_yield ()
+{
+
     // printf("yield1\n");
     int val = setjmp(current->jump_buffer);
-    if (val==0){
+    if (val == 0)
+    {
         // yielding to other co
         time(&current->last_execution_time);
         current->status = CO_RUNNING;
         struct co *next = pop(&co_list);
-        push(&co_list,current);
-        if (next==NULL){
+        push(&co_list, current);
+        if (next == NULL)
+        {
             // no other coroutine
             current = NULL;
-            longjmp(main_buffer,0);
+            longjmp(main_buffer, 0); //回到main
             return;
         }
         current = next;
-        if (current->status==CO_NEW){
+        if (current->status == CO_NEW)
+        {
             stack_switch_call(&current->stack[STACK_SIZE], current->func, (uintptr_t)current->arg);
-        }else if (current->status==CO_RUNNING){
-            longjmp(current->jump_buffer,0);
         }
-
-    }else{
+        else if (current->status == CO_RUNNING)
+        {
+            longjmp(current->jump_buffer, 0);
+        }
+    }
+    else
+    {
         // some other coroutine called yield. just return
-        printf("yield2\n");
+        uintptr_t rsp_value;
+        asm volatile(
+#if __x86_64__
+            "mov %%rsp, %[rsp_value]" : [rsp_value] "=r"(rsp_value)::"memory"
+#else
+            "mov %%esp, %[rsp_value]" : [rsp_value] "=r"(rsp_value)::"memory"
+#endif
+        );
+
+        printf("rsp==stack?%p, %p\n", &current->stack[STACK_SIZE], (void *)rsp_value);
         return;
     }
 }
-
-
