@@ -21,14 +21,13 @@ struct co
     void *arg;
 
     unsigned long last_execution_time; // timestamp for last execution. used as criteria for scheduling.
-    enum co_status status;      // 协程的状态
-    struct co *waiter;          // 是否有其他协程在等待当前协程. not really used in current implementation
-    jmp_buf jump_buffer;        // 寄存器现场. 通过setjmp库的jump_buffer表示
-    uint8_t stack[STACK_SIZE];  // 协程的堆栈
+    enum co_status status;             // 协程的状态
+    struct co *waiter;                 // 是否有其他协程在等待当前协程. not really used in current implementation
+    jmp_buf jump_buffer;               // 寄存器现场. 通过setjmp库的jump_buffer表示
+    uint8_t stack[STACK_SIZE];         // 协程的堆栈
 };
 
-
-struct co* co_start(const char *name, void (*func)(void *), void *arg);
-void co_yield();
+struct co *co_start(const char *name, void (*func)(void *), void *arg);
+void co_yield ();
 void co_wait(struct co *co);
 #endif
