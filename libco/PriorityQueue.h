@@ -10,7 +10,7 @@ typedef struct
 } PriorityQueue;
 
 // 使用co->last_executed进行比较
-#define LESS(a, b) ((a)->last_execution_time <= (b)->last_execution_time)
+#define LESS(a, b) ((a)->last_execution_time < (b)->last_execution_time)
 
 void swap(struct co** a, struct co** b)
 {
@@ -25,7 +25,7 @@ void heapifyUp(PriorityQueue *pq, int index)
         return;
 
     int parent = (index - 1) / 2;
-    if (LESS(pq->co_arr[parent], pq->co_arr[index]))
+    if (LESS(pq->co_arr[index], pq->co_arr[parent]))
     {
         swap(&pq->co_arr[parent], &pq->co_arr[index]);
         heapifyUp(pq, parent);
