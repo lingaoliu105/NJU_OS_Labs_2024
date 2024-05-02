@@ -20,8 +20,7 @@ struct co
     void (*func)(void *); // co_start 指定的入口地址和参数. 名为func的函数指针
     void *arg;
 
-    time_t last_execution_time; // timestamp for last execution time in seconds. used as criteria for scheduling.
-                                // 考虑后续更换精度更高的时间戳
+    unsigned long last_execution_time; // timestamp for last execution time in seconds. used as criteria for scheduling.
     enum co_status status;      // 协程的状态
     struct co *waiter;          // 是否有其他协程在等待当前协程
     jmp_buf jump_buffer;        // 寄存器现场. 通过setjmp库的jump_buffer表示

@@ -4,10 +4,11 @@
 #include <setjmp.h>
 #include "PriorityQueue.h"
 #include <time.h>
+#include <string.h>
 
-struct co *current = NULL; // global pointer to the current executing coroutine
-struct co main_co = {"main"};
-
+unsigned long g_clock = 0ul;
+struct co main_co = {"main",NULL,NULL,0ul,CO_RUNNING,NULL};
+struct co *current = &main_co; // global pointer to the current executing coroutine
 
 
 // 先设想我们需要用一个全局容器保存所有coroutine
@@ -47,6 +48,7 @@ PriorityQueue co_list;
 // };
 
 jmp_buf main_buffer;
+
 
 static inline void
 stack_switch_call(void *sp, void *entry, uintptr_t arg)
@@ -98,7 +100,7 @@ void wrapped_task(void (*func)(void *), void *arg)
     func(arg);
     printf("finish task\n");
     current->status = CO_DEAD;
-    co_yield();
+    co_yield(); // 等到下次yield到waiter时回收
 }
 
 struct co *co_start(const char *name, void (*func)(void *), void *arg)
@@ -109,67 +111,65 @@ struct co *co_start(const char *name, void (*func)(void *), void *arg)
     co_ptr->name = name;
     co_ptr->func = func;
     co_ptr->arg = arg;
-    time(&co_ptr->last_execution_time);
-
-    // 若current为空,此时无任务,则可开始执行func
-    if (current == NULL)
-    {
-        co_ptr->status = CO_RUNNING;
-        current = co_ptr;
-
-        int jmp_result = setjmp(main_buffer); // 给main留一个buffer.假如没有其他协程则跳转回来
-        if (jmp_result == 0)
-        {
-            stack_switch_call_biarg(&current->stack[STACK_SIZE],wrapped_task,(uintptr_t) current->func, (uintptr_t)arg);
-        } // else return
-    }
-    else
-    {
-        co_ptr->status = CO_NEW;
-        // register co in the co list
-        push(&co_list, co_ptr); // take note of the timestamp
-    }
+    // time(&co_ptr->last_execution_time);
+    g_clock++;
+    co_ptr->last_execution_time = g_clock;
+    
+    co_ptr->status = CO_NEW;
+    // register co in the co list
+    push(&co_list, co_ptr); // take note of the timestamp
+    
     return co_ptr;
 }
 
 void co_wait(struct co *co)
 {
+    // 若current为空,此时无任务,则可开始执行func
+    // if (current == NULL)
+    // {
+    //     co_yield();
+    //     co->status = CO_RUNNING;
+    //     current = co;
+
+    //     int jmp_result = setjmp(main_buffer); // 给main留一个buffer.假如没有其他协程则跳转回来
+    //     if (jmp_result == 0)
+    //     {
+    //         stack_switch_call_biarg(&current->stack[STACK_SIZE], wrapped_task, (uintptr_t)current->func, (uintptr_t)arg);
+    //     } // else return
+    // }
     // block parent thread until co is dead
-    printf("wait\n");
-    if (current!=NULL){ 
-        current->status = CO_WAITING;
-        co->waiter = current;
-    }else{ // called by main
-        co->waiter = &main_co;
-    }
+    current->status = CO_WAITING;
+    co->waiter = current;
     while (co->status != CO_DEAD)
     {
-        co_yield ();
+        co_yield();
     }
     free(co); // 在此处回收资源,不在yield中
+    co = NULL;
+    current->status = CO_RUNNING;
 }
 
 void co_yield ()
 {
-
     // printf("yield1\n");
     int val = setjmp(current->jump_buffer);
     if (val == 0)
     {
         // yielding to other co
-        time(&current->last_execution_time);
+        // time(&current->last_execution_time);
+        g_clock++;
+        current->last_execution_time = g_clock;
         struct co *next = pop(&co_list);
         if (current->status!=CO_DEAD){
             push(&co_list, current);
         }
-        if (next == NULL)
+        printf("current: %s, next: %s\n", current->name, next->name);
+        current = next;
+        if (current == NULL)
         {
-            // no other coroutine
-            current = NULL;
-            longjmp(main_buffer, 0); //回到main
+            printf("cannot find next task\n"); // not supposed to happen
             return;
         }
-        current = next;
         if (current->status == CO_NEW)
         {
             // stack_switch_call(&current->stack[STACK_SIZE], current->func, (uintptr_t)current->arg);
@@ -178,6 +178,9 @@ void co_yield ()
         else if (current->status == CO_RUNNING)
         {
             longjmp(current->jump_buffer, 0);
+        }
+        else if (current->status==CO_WAITING){
+            longjmp(current->jump_buffer, 0); // 由waiting coroutine的wait()处理
         }
         // co_dead not supposed to appear
     }
