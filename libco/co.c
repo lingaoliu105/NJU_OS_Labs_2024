@@ -36,6 +36,7 @@ stack_switch_call(void *sp, void *entry, uintptr_t arg)
 #endif
     );
 }
+
 static inline void
 stack_switch_call_biarg(void *sp, void *entry, uintptr_t arg1, uintptr_t arg2)
 {
@@ -48,12 +49,13 @@ stack_switch_call_biarg(void *sp, void *entry, uintptr_t arg1, uintptr_t arg2)
           "a"(arg1),
           "c"(arg2)
         : "memory"
-#else // TODO: complete implementation
-        "movl %0, %%esp; movl %2, 4(%0); jmp *%1"
+#else
+        "movl %0, %%esp; movl %2, 4(%0);movl %3, 8(%0); jmp *%1"
         :
         : "b"((uintptr_t)sp - 8),
           "d"(entry),
-          "a"(arg1)
+          "a"(arg1),
+          "c"(arg2)
         : "memory"
 #endif
     );
