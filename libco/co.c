@@ -6,6 +6,9 @@
 #include <time.h>
 
 struct co *current = NULL; // global pointer to the current executing coroutine
+struct co main_co = {"main"};
+
+
 
 // 先设想我们需要用一个全局容器保存所有coroutine
 // 假设最多100个协程 (defined in PriorityQueue.h)
@@ -97,6 +100,7 @@ void wrapped_task(void (*func)(void *), void *arg)
     current->status = CO_DEAD;
     co_yield();
 }
+
 struct co *co_start(const char *name, void (*func)(void *), void *arg)
 {
     // construct co
@@ -130,7 +134,19 @@ struct co *co_start(const char *name, void (*func)(void *), void *arg)
 
 void co_wait(struct co *co)
 {
+    // block parent thread until co is dead
     printf("wait\n");
+    if (current!=NULL){ 
+        current->status = CO_WAITING;
+        co->waiter = current;
+    }else{ // called by main
+        co->waiter = &main_co;
+    }
+    while (co->status != CO_DEAD)
+    {
+        co_yield ();
+    }
+    free(co); // 在此处回收资源,不在yield中
 }
 
 void co_yield ()
@@ -146,11 +162,6 @@ void co_yield ()
         if (current->status!=CO_DEAD){
             push(&co_list, current);
         }
-        // else // recycle resource for dead coroutines
-        // {
-        //     free(current);
-        //     current = NULL;
-        // } //不能正常free,猜测是因为context还在当前coroutine
         if (next == NULL)
         {
             // no other coroutine
