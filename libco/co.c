@@ -66,6 +66,37 @@ stack_switch_call(void *sp, void *entry, uintptr_t arg)
 #endif
     );
 }
+static inline void
+stack_switch_call_biarg(void *sp, void *entry, uintptr_t arg1, uintptr_t arg2)
+{
+    asm volatile(
+#if __x86_64__
+        "movq %0, %%rsp; movq %2, %%rdi; movq %3, %%rsi; jmp *%1"
+        :
+        : "b"((uintptr_t)sp),
+          "d"(entry),
+          "a"(arg1),
+          "c"(arg2)
+        : "memory"
+#else // TODO: complete implementation
+        "movl %0, %%esp; movl %2, 4(%0); jmp *%1"
+        :
+        : "b"((uintptr_t)sp - 8),
+          "d"(entry),
+          "a"(arg1)
+        : "memory"
+#endif
+    );
+}
+
+void wrapped_task(void (*func)(void *), void *arg)
+{
+    current->status = CO_RUNNING;
+    func(arg);
+    printf("finish task\n");
+    current->status = CO_DEAD;
+    co_yield();
+}
 struct co *co_start(const char *name, void (*func)(void *), void *arg)
 {
     // construct co
@@ -85,7 +116,7 @@ struct co *co_start(const char *name, void (*func)(void *), void *arg)
         int jmp_result = setjmp(main_buffer); // 给main留一个buffer.假如没有其他协程则跳转回来
         if (jmp_result == 0)
         {
-            stack_switch_call(&current->stack[STACK_SIZE], func, (uintptr_t)arg);
+            stack_switch_call_biarg(&current->stack[STACK_SIZE],wrapped_task,(uintptr_t) current->func, (uintptr_t)arg);
         } // else return
     }
     else
@@ -111,9 +142,15 @@ void co_yield ()
     {
         // yielding to other co
         time(&current->last_execution_time);
-        current->status = CO_RUNNING;
         struct co *next = pop(&co_list);
-        push(&co_list, current);
+        if (current->status!=CO_DEAD){
+            push(&co_list, current);
+        }
+        // else // recycle resource for dead coroutines
+        // {
+        //     free(current);
+        //     current = NULL;
+        // } //不能正常free,猜测是因为context还在当前coroutine
         if (next == NULL)
         {
             // no other coroutine
@@ -124,26 +161,18 @@ void co_yield ()
         current = next;
         if (current->status == CO_NEW)
         {
-            stack_switch_call(&current->stack[STACK_SIZE], current->func, (uintptr_t)current->arg);
+            // stack_switch_call(&current->stack[STACK_SIZE], current->func, (uintptr_t)current->arg);
+            stack_switch_call_biarg(&current->stack[STACK_SIZE], wrapped_task, (uintptr_t)current->func, (uintptr_t) current->arg);
         }
         else if (current->status == CO_RUNNING)
         {
             longjmp(current->jump_buffer, 0);
         }
+        // co_dead not supposed to appear
     }
     else
     {
         // some other coroutine called yield. just return
-        uintptr_t rsp_value;
-        asm volatile(
-#if __x86_64__
-            "mov %%rsp, %[rsp_value]" : [rsp_value] "=r"(rsp_value)::"memory"
-#else
-            "mov %%esp, %[rsp_value]" : [rsp_value] "=r"(rsp_value)::"memory"
-#endif
-        );
-
-        printf("rsp==stack?%p, %p\n", &current->stack[STACK_SIZE], (void *)rsp_value);
         return;
     }
 }
